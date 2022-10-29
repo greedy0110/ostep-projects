@@ -6,6 +6,11 @@
 void read_text_from_file(char* fn, char** text) {
     FILE *fp = fopen(fn, "r");
 
+    if (fp == NULL) {
+        fprintf(stderr, "%s does not exist.", fn);
+        exit(1);
+    }
+
     if (fseek(fp, 0, SEEK_END) != 0) {
         fprintf(stderr, "fseek failed (END)");
         exit(1);
