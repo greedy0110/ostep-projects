@@ -3,8 +3,21 @@
 #include <string.h>
 #include <assert.h>
 
-void read_text_from_file(char* fn, char* text) {
+void read_text_from_file(char* fn, char** text) {
     FILE *fp = fopen(fn, "r");
+
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fprintf(stderr, "fseek failed (END)");
+        exit(1);
+    }
+    long fsize = ftell(fp);
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+        fprintf(stderr, "fseek failed (SET)");
+        exit(1);
+    }
+
+    *text = (char*)malloc(fsize);
+    fread(*text, 1, fsize, fp);
 
     fclose(fp);
 }
