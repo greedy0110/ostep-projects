@@ -1,0 +1,1 @@
+- this time the input and the output are reversed. The input file is in binary format and the output shows in standard output
