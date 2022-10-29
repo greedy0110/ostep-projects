@@ -48,35 +48,24 @@ int write_int_to_buffer(int n, char* buffer, int index) {
 }
 
 // i use char** to pass the address that this function generates.
-void compress(char* source, char** compressed) {
+void compress(char* source) {
     // source : a plain ASCII string
     int n = strlen(source);
-    *compressed = (char*)malloc(sizeof(char) * (n*2 + 1));
-    memset(*compressed, 0,sizeof(char) * (2*n + 1));
-
-    int c_index = 0, cnt = 1;
+    int cnt = 1;
     char prev = source[0];
     for (int i = 1; i < n; i++) {
         char cur = source[i];
         if (prev == cur) {
             cnt++;
         } else {
-            // write cnt and prev
-            int add = write_int_to_buffer(cnt, *compressed, c_index);
-            c_index += add;
-            (*compressed)[c_index++] = prev;
+            fwrite(&cnt, sizeof cnt, 1, stdout);
+            fwrite(&prev, sizeof prev, 1, stdout);
             prev = cur;
             cnt = 1;
         }
     }
-    // write cnt and prev
-    int add = write_int_to_buffer(cnt, *compressed, c_index);
-    c_index += add;
-
-    // this doesn't work
-    // *compressed[c_index++] = prev;
-    // it does work! wtf!
-    (*compressed)[c_index++] = prev;
+    fwrite(&cnt, sizeof cnt, 1, stdout);
+    fwrite(&prev, sizeof prev, 1, stdout);
 }
 
 void print(char* text) {
@@ -85,10 +74,9 @@ void print(char* text) {
 }
 
 void compress_file(const char* fn) {
-    char *source, *compressed;
+    char *source;
     read_text_from_file(fn, &source);
-    compress(source, &compressed);
-    print(compressed);
+    compress(source);
 }
 
 int main(int argc, char const *argv[]) {
