@@ -12,10 +12,11 @@ void unzip_single(const char* fn) {
 
     int cnt;
     char ch;
-    fread(&cnt, sizeof(int), 1, fp);
-    fread(&ch, sizeof(char), 1, fp);
+    while (fread(&cnt, sizeof(int), 1, fp) != 0) { // repeat until it reaches the eof.
+        fread(&ch, sizeof(char), 1, fp);
+        for (int i = 0; i< cnt; i++) printf("%c", ch);
+    }
 
-    for (int i = 0; i< cnt; i++) printf("%c", ch);
 }
 
 void unzip(int numf, const char* fn[]) {
