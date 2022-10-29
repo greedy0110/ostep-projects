@@ -46,7 +46,7 @@ void compress(char* source, char** compressed) {
             // write cnt and prev
             int add = write_int_to_buffer(cnt, *compressed, c_index);
             c_index += add;
-            *compressed[c_index++] = prev;
+            (*compressed)[c_index++] = prev;
             prev = cur;
             cnt = 1;
         }
@@ -54,7 +54,11 @@ void compress(char* source, char** compressed) {
     // write cnt and prev
     int add = write_int_to_buffer(cnt, *compressed, c_index);
     c_index += add;
-    *compressed[c_index++] = prev;
+
+    // this doesn't work
+    // *compressed[c_index++] = prev;
+    // it does work! wtf!
+    (*compressed)[c_index++] = prev;
 }
 
 void print(char* text) {
@@ -75,8 +79,9 @@ int main(int argc, char const *argv[]) {
 
     // what i want here, pass the memory address which allocates in compress function.
     compress(source, &compressed);
-
     assert(strcmp(compressed, "10a4b") == 0);
+    compress("abc", &compressed);
+    assert(strcmp(compressed, "1a1b1c") == 0);
 
     free(compressed);
     return 0;
