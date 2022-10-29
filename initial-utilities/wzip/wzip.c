@@ -3,7 +3,7 @@
 #include <string.h>
 #include <assert.h>
 
-void read_text_from_file(char* fn, char** text) {
+void read_text_from_file(const char* fn, char** text) {
     FILE *fp = fopen(fn, "r");
 
     if (fp == NULL) {
@@ -84,7 +84,7 @@ void print(char* text) {
     fwrite(text, sizeof(char), strlen(text), stdout);
 }
 
-void compress_file(char* fn) {
+void compress_file(const char* fn) {
     char *source, *compressed;
     read_text_from_file(fn, &source);
     compress(source, &compressed);
@@ -92,6 +92,13 @@ void compress_file(char* fn) {
 }
 
 int main(int argc, char const *argv[]) {
-    compress_file("test.txt");
+    if (argc == 1) {
+        printf("wzip: file1 [file2 ...]\n");
+        exit(1);
+    }
+
+    for (int i=1; i<argc; i++) {
+        compress_file(argv[i]);
+    }
     return 0;
 }
