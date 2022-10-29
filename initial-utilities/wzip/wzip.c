@@ -79,6 +79,14 @@ void print(char* text) {
     fwrite(text, sizeof(char), strlen(text), stdout);
 }
 
+void compress_file(char* fn) {
+    char *source, *compressed;
+    read_text_from_file(fn, &source);
+    compress(source, &compressed);
+    print(compressed);
+}
+
 int main(int argc, char const *argv[]) {
+    compress_file("test.txt");
     return 0;
 }
