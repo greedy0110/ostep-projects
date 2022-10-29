@@ -80,22 +80,5 @@ void print(char* text) {
 }
 
 int main(int argc, char const *argv[]) {
-    /* code */
-
-    char* source = "aaaaaaaaaabbbb";
-    char* compressed = NULL;
-
-    if (strlen(source) == 0) {
-        // there is nothing to compress
-        return 0;
-    }
-
-    // what i want here, pass the memory address which allocates in compress function.
-    compress(source, &compressed);
-    assert(strcmp(compressed, "10a4b") == 0);
-    compress("abc", &compressed);
-    assert(strcmp(compressed, "1a1b1c") == 0);
-
-    free(compressed);
     return 0;
 }
