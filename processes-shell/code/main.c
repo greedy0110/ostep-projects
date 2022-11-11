@@ -10,21 +10,26 @@ char paths[128][256] = {
 }; // 32KB
 int num_path = 1;
 
+void programe_error() {
+    char error_message[30] = "An error has occurred\n";
+    write(STDERR_FILENO, error_message, strlen(error_message)); 
+}
+
 // return 0 when the execution has occured.
 int execute(char *fullpath, char *argv[]) {
     if (access(fullpath, X_OK) == 0) {
         // argv[0] is an execuatable.
         pid_t rc = fork();
         if (rc == -1) {
-            //TODO: print error
-            printf("fork error occured");
+            // printf("fork error occured");
+            programe_error();
             return 1;
         } else if (rc == 0) {
             // child
             rc = execv(fullpath, argv);
             if (rc == -1) {
-                //TODO: print error
-                printf("execv error occured");
+                // printf("execv error occured");
+                programe_error();
                 return 1;
             }
         } else {
@@ -32,8 +37,9 @@ int execute(char *fullpath, char *argv[]) {
             // rc is the child process id.
             // parent should wait for the child to finish.
             if (waitpid(rc, NULL, 0) == -1) {
-                //TODO: print error
-                printf("waitpid error occured");
+                // printf("waitpid error occured");
+                programe_error();
+                return 1;
             }
 
             return 0; // launch success
@@ -56,16 +62,20 @@ void parse_command_execute(char *raw_line) {
 
     // builtin command
     if (strcmp(argv[0], "exit") == 0) {
-        exit(0);
+        if (argc != 1) {
+            programe_error();
+        } else {
+            exit(0);
+        }
     } else if (strcmp(argv[0], "cd") == 0) {
         if (argc != 2) {
-            //TODO: print error
-            printf("cd error occured");
+            // printf("cd error occured");
+            programe_error();
             return;
         }
         if (chdir(argv[1]) != 0) {
-            //TODO: print error
-            printf("chdir error occured");
+            // printf("chdir error occured");
+            programe_error();
         }
     } else if (strcmp(argv[0], "path") == 0) {
         int i;
@@ -78,14 +88,20 @@ void parse_command_execute(char *raw_line) {
         // path support
         char fullpath[1024];
         int i;
+        int fail = 1;
         for (i = 0; i<num_path; i++) {
             strcpy(fullpath, paths[i]);
             strcat(fullpath, "/");
             strcat(fullpath, argv[0]);
             if (execute(fullpath, argv) == 0) {
                 // execution success
+                fail = 0;
                 break;
             }
+        }
+
+        if (fail) {
+            programe_error();
         }
     }
 }
@@ -100,14 +116,12 @@ int main(int argc, char const *argv[]) {
         // batch mode
         in_fp = fopen(argv[1], "r");
         if (in_fp == NULL) {
-            //TODO: print error
-            printf("open error occured");
+            // printf("open error occured");
             exit(1);
         }
     } else {
         // wrong
-        //TODO: print error
-        printf("argc error occured");
+        // printf("argc error occured");
         exit(1);
     }
 
