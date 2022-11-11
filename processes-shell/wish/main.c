@@ -5,23 +5,27 @@
 #include <sys/wait.h>
 
 const char* PROMPT = "wish> ";
-const char* paths[] = {
+char paths[128][256] = {
     "/bin"
-};
+}; // 32KB
+int num_path = 1;
 
-void execute(char *fullpath, char *argv[]) {
+// return 0 when the execution has occured.
+int execute(char *fullpath, char *argv[]) {
     if (access(fullpath, X_OK) == 0) {
         // argv[0] is an execuatable.
         pid_t rc = fork();
         if (rc == -1) {
             //TODO: print error
             printf("fork error occured");
+            return 1;
         } else if (rc == 0) {
             // child
             rc = execv(fullpath, argv);
             if (rc == -1) {
                 //TODO: print error
                 printf("execv error occured");
+                return 1;
             }
         } else {
             // parent
@@ -31,11 +35,15 @@ void execute(char *fullpath, char *argv[]) {
                 //TODO: print error
                 printf("waitpid error occured");
             }
+
+            return 0; // launch success
         }
     }
+    return 1;
 }
 
 int main(int argc, char const *argv[]) {
+
     if (argc == 1) {
         // interact mode
         char *line = NULL;
@@ -70,18 +78,25 @@ int main(int argc, char const *argv[]) {
                         printf("chdir error occured");
                     }
                 } else if (strcmp(argv[0], "path") == 0) {
-
+                    int i;
+                    for (i = 1; i < argc; i++) {
+                        strcpy(paths[i-1], argv[i]);
+                    } 
+                    num_path = argc - 1;
                 } else {
                     // should execute another program.
-                    char fullpath[1024];
-
                     // path support
-                    //TODO: multiple path support
-                    strcpy(fullpath, paths[0]);
-                    strcat(fullpath, "/");
-                    strcat(fullpath, argv[0]);
-
-                    execute(fullpath, argv);
+                    char fullpath[1024];
+                    int i;
+                    for (i = 0; i<num_path; i++) {
+                        strcpy(fullpath, paths[i]);
+                        strcat(fullpath, "/");
+                        strcat(fullpath, argv[0]);
+                        if (execute(fullpath, argv) == 0) {
+                            // execution success
+                            break;
+                        }
+                    }
                 }
             }
             printf("%s", PROMPT);
