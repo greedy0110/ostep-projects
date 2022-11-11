@@ -5,6 +5,9 @@
 #include <sys/wait.h>
 
 const char* PROMPT = "wish> ";
+const char* paths[] = {
+    "/bin"
+};
 
 int main(int argc, char const *argv[]) {
     if (argc == 1) {
@@ -14,7 +17,7 @@ int main(int argc, char const *argv[]) {
         ssize_t linelen = 0;
         do {
             if (linelen != 0) {
-                line[linelen-1] = '\0'; // the return of getline is a new line. so earse it.
+                line[linelen-1] = '\0'; // the return of getline is a new line. so replace it.
 
                 // parse
                 char *token;
@@ -30,19 +33,26 @@ int main(int argc, char const *argv[]) {
                     exit(0);
                 } else {
                     // should execute another program.
-                    //TODO: path support
-                    if (access(argv[0], X_OK) == 0) {
+                    char fullpath[1024];
+
+                    // path support
+                    //TODO: multiple path support
+                    strcpy(fullpath, paths[0]);
+                    strcat(fullpath, "/");
+                    strcat(fullpath, argv[0]);
+
+                    if (access(fullpath, X_OK) == 0) {
                         // argv[0] is an execuatable.
                         pid_t rc = fork();
                         if (rc == -1) {
                             //TODO: print error
-                            printf("error occured");
+                            printf("fork error occured");
                         } else if (rc == 0) {
                             // child
-                            rc = execv(argv[0], argv);
+                            rc = execv(fullpath, argv);
                             if (rc == -1) {
                                 //TODO: print error
-                                printf("error occured");
+                                printf("execv error occured");
                             }
                         } else {
                             // parent
@@ -50,7 +60,7 @@ int main(int argc, char const *argv[]) {
                             // parent should wait for the child to finish.
                             if (waitpid(rc, NULL, 0) == -1) {
                                 //TODO: print error
-                                printf("error occured");
+                                printf("waitpid error occured");
                             }
                         }
                     }
@@ -60,8 +70,10 @@ int main(int argc, char const *argv[]) {
         } while ((linelen = getline(&line, &linecap, stdin)) > 0);
     } else if (argc == 2) {
         // batch mode
+        //TODO:
     } else {
         // wrong
+        //TODO:
         exit(1);
     }
 
