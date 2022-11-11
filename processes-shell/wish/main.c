@@ -9,6 +9,32 @@ const char* paths[] = {
     "/bin"
 };
 
+void execute(char *fullpath, char *argv[]) {
+    if (access(fullpath, X_OK) == 0) {
+        // argv[0] is an execuatable.
+        pid_t rc = fork();
+        if (rc == -1) {
+            //TODO: print error
+            printf("fork error occured");
+        } else if (rc == 0) {
+            // child
+            rc = execv(fullpath, argv);
+            if (rc == -1) {
+                //TODO: print error
+                printf("execv error occured");
+            }
+        } else {
+            // parent
+            // rc is the child process id.
+            // parent should wait for the child to finish.
+            if (waitpid(rc, NULL, 0) == -1) {
+                //TODO: print error
+                printf("waitpid error occured");
+            }
+        }
+    }
+}
+
 int main(int argc, char const *argv[]) {
     if (argc == 1) {
         // interact mode
@@ -55,29 +81,7 @@ int main(int argc, char const *argv[]) {
                     strcat(fullpath, "/");
                     strcat(fullpath, argv[0]);
 
-                    if (access(fullpath, X_OK) == 0) {
-                        // argv[0] is an execuatable.
-                        pid_t rc = fork();
-                        if (rc == -1) {
-                            //TODO: print error
-                            printf("fork error occured");
-                        } else if (rc == 0) {
-                            // child
-                            rc = execv(fullpath, argv);
-                            if (rc == -1) {
-                                //TODO: print error
-                                printf("execv error occured");
-                            }
-                        } else {
-                            // parent
-                            // rc is the child process id.
-                            // parent should wait for the child to finish.
-                            if (waitpid(rc, NULL, 0) == -1) {
-                                //TODO: print error
-                                printf("waitpid error occured");
-                            }
-                        }
-                    }
+                    execute(fullpath, argv);
                 }
             }
             printf("%s", PROMPT);
