@@ -29,8 +29,22 @@ int main(int argc, char const *argv[]) {
                 argv[argc] = NULL;
                 
                 // argv[0] == command, argv[1..] == args
+
+                // builtin command
                 if (strcmp(argv[0], "exit") == 0) {
                     exit(0);
+                } else if (strcmp(argv[0], "cd") == 0) {
+                    if (argc != 2) {
+                        //TODO: print error
+                        printf("cd error occured");
+                        continue;
+                    }
+                    if (chdir(argv[1]) != 0) {
+                        //TODO: print error
+                        printf("chdir error occured");
+                    }
+                } else if (strcmp(argv[0], "path") == 0) {
+
                 } else {
                     // should execute another program.
                     char fullpath[1024];
