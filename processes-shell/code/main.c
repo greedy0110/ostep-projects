@@ -16,17 +16,32 @@ void programe_error() {
 }
 
 // return 0 when the execution has occured.
-int execute(char *fullpath, char *argv[]) {
+int execute(char *fullpath, char *argv[], char* red_fn) { //TODO: red_fn must be trimmed.
     if (access(fullpath, X_OK) == 0) {
         // argv[0] is an execuatable.
         pid_t rc = fork();
+        FILE *fp = NULL;
         if (rc == -1) {
             // printf("fork error occured");
             programe_error();
             return 1;
         } else if (rc == 0) {
+            if (red_fn != NULL) {
+                fp = fopen(red_fn, "w");
+                if (fp == NULL) {
+                    // printf("red fopen error occured");
+                    programe_error();
+                    return 1;
+                }
+                fclose(stdout);
+                stdout = fp;
+                fclose(stderr);
+                stderr = fp;
+            }
+
             // child
             rc = execv(fullpath, argv);
+
             if (rc == -1) {
                 // printf("execv error occured");
                 programe_error();
@@ -42,6 +57,9 @@ int execute(char *fullpath, char *argv[]) {
                 return 1;
             }
 
+            if (fp != NULL)
+                fclose(fp);
+
             return 0; // launch success
         }
     }
@@ -53,7 +71,36 @@ void parse_command_execute(char *raw_line) {
     char *token;
     char *argv[10]; // FIXME: 10?
     int argc = 0;
-    while ((token = strsep(&raw_line, " ")) != NULL) {
+
+    while ((token = strsep(&raw_line, ">")) != NULL) { //TODO: too simple
+        argv[argc++] = token; 
+    }
+
+    char *command_line = strdup(argv[0]);
+    if (command_line == NULL) {
+        programe_error();
+        return;
+    }
+
+    char *red_fn = NULL; // redirection file name
+    //TODO: free?
+    if (argc == 1) {
+        argc = 0;
+    } else if (argc == 2) {
+        // 2 for redirection
+        red_fn = strdup(argv[1]);
+        if (red_fn == NULL) {
+            programe_error();
+            return;
+        }
+    } else {
+        programe_error();
+        return;
+    }
+
+    argc = 0;
+
+    while ((token = strsep(&command_line, " ")) != NULL) { //TODO: too simple
         argv[argc++] = token; 
     }
     argv[argc] = NULL;
@@ -71,9 +118,7 @@ void parse_command_execute(char *raw_line) {
         if (argc != 2) {
             // printf("cd error occured");
             programe_error();
-            return;
-        }
-        if (chdir(argv[1]) != 0) {
+        } else if (chdir(argv[1]) != 0) {
             // printf("chdir error occured");
             programe_error();
         }
@@ -93,7 +138,7 @@ void parse_command_execute(char *raw_line) {
             strcpy(fullpath, paths[i]);
             strcat(fullpath, "/");
             strcat(fullpath, argv[0]);
-            if (execute(fullpath, argv) == 0) {
+            if (execute(fullpath, argv, red_fn) == 0) {
                 // execution success
                 fail = 0;
                 break;
@@ -138,6 +183,8 @@ int main(int argc, char const *argv[]) {
             printf("%s", PROMPT);
         }
     } while ((linelen = getline(&line, &linecap, in_fp)) > 0);
+    // getline uses malloc if linep is NULL, and realloc if linep is not null.
+    free(line); 
 
     return 0;
 }
