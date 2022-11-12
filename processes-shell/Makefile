@@ -8,3 +8,4 @@ common.o: common.c
 clean:
 	rm *.o
 	rm wish
+	rm -rf *.dSYM
