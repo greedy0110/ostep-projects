@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <assert.h>
+#include "common.h"
 
 const char* PROMPT = "wish> ";
 char paths[128][256] = {
@@ -87,8 +89,18 @@ void parse_command_execute(char *raw_line) {
         argc = 0;
     } else if (argc == 2) {
         // 2 for redirection
-        red_fn = strdup(argv[1]);
-        if (red_fn == NULL) {
+        int argc = 0;
+        trim(&red_fn, argv[1]);
+
+        if (strlen(red_fn) == 0) {
+            programe_error();
+            return;
+        }
+        while (strsep(&red_fn, " ") != NULL) { //TODO: too simple
+            argc++;
+        }
+
+        if (argc >= 2) {
             programe_error();
             return;
         }

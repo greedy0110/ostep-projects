@@ -33,11 +33,11 @@ void asserttrim(char *input, const char *expected) {
 }
 
 // test code
-int main(int argc, char const *argv[]) {
-    asserttrim("", "");
-    asserttrim("a", "a");
-    asserttrim(" a", "a");
-    asserttrim("a ", "a");
-    asserttrim(" a ", "a");
-    return 0;
-}
+// int main(int argc, char const *argv[]) {
+//     asserttrim("", "");
+//     asserttrim("a", "a");
+//     asserttrim(" a", "a");
+//     asserttrim("a ", "a");
+//     asserttrim(" a ", "a");
+//     return 0;
+// }
