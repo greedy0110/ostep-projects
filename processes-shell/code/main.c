@@ -11,6 +11,7 @@ char paths[128][256] = {
 int num_path = 1;
 
 void programe_error() {
+    // perror("Error: ");
     char error_message[30] = "An error has occurred\n";
     write(STDERR_FILENO, error_message, strlen(error_message)); 
 }
@@ -27,16 +28,14 @@ int execute(char *fullpath, char *argv[], char* red_fn) { //TODO: red_fn must be
             return 1;
         } else if (rc == 0) {
             if (red_fn != NULL) {
-                fp = fopen(red_fn, "w");
-                if (fp == NULL) {
-                    // printf("red fopen error occured");
+                if (freopen(red_fn, "w", stdout) == NULL) {
                     programe_error();
                     return 1;
                 }
-                fclose(stdout);
-                stdout = fp;
-                fclose(stderr);
-                stderr = fp;
+                if (freopen(red_fn, "w", stderr) == NULL) {
+                    programe_error();
+                    return 1;
+                }
             }
 
             // child
@@ -111,6 +110,7 @@ void parse_command_execute(char *raw_line) {
     if (strcmp(argv[0], "exit") == 0) {
         if (argc != 1) {
             programe_error();
+            return;
         } else {
             exit(0);
         }
@@ -118,9 +118,11 @@ void parse_command_execute(char *raw_line) {
         if (argc != 2) {
             // printf("cd error occured");
             programe_error();
+            return;
         } else if (chdir(argv[1]) != 0) {
             // printf("chdir error occured");
             programe_error();
+            return;
         }
     } else if (strcmp(argv[0], "path") == 0) {
         int i;
@@ -147,6 +149,7 @@ void parse_command_execute(char *raw_line) {
 
         if (fail) {
             programe_error();
+            return;
         }
     }
 }
