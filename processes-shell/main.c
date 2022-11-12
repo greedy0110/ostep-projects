@@ -90,6 +90,12 @@ void parse_command_execute(char *raw_line) {
     if (argc == 1) {
         argc = 0;
     } else if (argc == 2) {
+
+        if (strlen(command_line) == 0) {
+            programe_error();
+            return;
+        }
+
         // 2 for redirection
         int argc = 0;
         trim(&red_fn, argv[1]);
