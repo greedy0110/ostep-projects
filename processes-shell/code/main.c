@@ -24,16 +24,16 @@ int execute(char *fullpath, char *argv[], char* red_fn) { //TODO: red_fn must be
         FILE *fp = NULL;
         if (rc == -1) {
             // printf("fork error occured");
-            programe_error();
+            // programe_error();
             return 1;
         } else if (rc == 0) {
             if (red_fn != NULL) {
                 if (freopen(red_fn, "w", stdout) == NULL) {
-                    programe_error();
+                    // programe_error();
                     return 1;
                 }
                 if (freopen(red_fn, "w", stderr) == NULL) {
-                    programe_error();
+                    // programe_error();
                     return 1;
                 }
             }
@@ -43,7 +43,7 @@ int execute(char *fullpath, char *argv[], char* red_fn) { //TODO: red_fn must be
 
             if (rc == -1) {
                 // printf("execv error occured");
-                programe_error();
+                // programe_error();
                 return 1;
             }
         } else {
@@ -52,7 +52,7 @@ int execute(char *fullpath, char *argv[], char* red_fn) { //TODO: red_fn must be
             // parent should wait for the child to finish.
             if (waitpid(rc, NULL, 0) == -1) {
                 // printf("waitpid error occured");
-                programe_error();
+                // programe_error();
                 return 1;
             }
 
