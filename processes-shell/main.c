@@ -30,6 +30,7 @@ int execute(char *fullpath, char *argv[], char* red_fn) { //TODO: red_fn must be
             return 1;
         } else if (rc == 0) {
             if (red_fn != NULL) {
+                // printf("ch : %s\n", red_fn);
                 if (freopen(red_fn, "w", stdout) == NULL) {
                     // programe_error();
                     return 1;
@@ -75,6 +76,7 @@ void parse_command_execute(char *raw_line) {
 
     while ((token = strsep(&raw_line, ">")) != NULL) { //TODO: too simple
         argv[argc++] = token; 
+        // printf("%s\n", token);
     }
 
     char *command_line = strdup(argv[0]);
@@ -91,14 +93,18 @@ void parse_command_execute(char *raw_line) {
         // 2 for redirection
         int argc = 0;
         trim(&red_fn, argv[1]);
+        // printf("%s\n", red_fn);
 
         if (strlen(red_fn) == 0) {
             programe_error();
             return;
         }
-        while (strsep(&red_fn, " ") != NULL) { //TODO: too simple
+
+        char *trimmed = strdup(red_fn);
+        while (strsep(&trimmed, " ") != NULL) { //TODO: too simple
             argc++;
         }
+        // printf("%s\n", red_fn);
 
         if (argc >= 2) {
             programe_error();
