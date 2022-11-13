@@ -25,18 +25,13 @@ int execute(char *fullpath, char *argv[], char* red_fn) { //TODO: red_fn must be
         pid_t rc = fork();
         FILE *fp = NULL;
         if (rc == -1) {
-            // printf("fork error occured");
-            // programe_error();
             return 1;
         } else if (rc == 0) {
             if (red_fn != NULL) {
-                // printf("ch : %s\n", red_fn);
                 if (freopen(red_fn, "w", stdout) == NULL) {
-                    // programe_error();
                     return 1;
                 }
                 if (freopen(red_fn, "w", stderr) == NULL) {
-                    // programe_error();
                     return 1;
                 }
             }
@@ -45,8 +40,6 @@ int execute(char *fullpath, char *argv[], char* red_fn) { //TODO: red_fn must be
             rc = execv(fullpath, argv);
 
             if (rc == -1) {
-                // printf("execv error occured");
-                // programe_error();
                 return 1;
             }
         } else {
@@ -54,8 +47,6 @@ int execute(char *fullpath, char *argv[], char* red_fn) { //TODO: red_fn must be
             // rc is the child process id.
             // parent should wait for the child to finish.
             if (waitpid(rc, NULL, 0) == -1) {
-                // printf("waitpid error occured");
-                // programe_error();
                 return 1;
             }
 
@@ -68,7 +59,7 @@ int execute(char *fullpath, char *argv[], char* red_fn) { //TODO: red_fn must be
     return 1;
 }
 
-void parse_command_execute(char *raw_line) {
+int parse_command_execute(char *raw_line) {
     // parse
     char *token;
     char *argv[10]; // FIXME: 10?
@@ -76,13 +67,11 @@ void parse_command_execute(char *raw_line) {
 
     while ((token = strsep(&raw_line, ">")) != NULL) { //TODO: too simple
         argv[argc++] = token; 
-        // printf("%s\n", token);
     }
 
     char *command_line = strdup(argv[0]);
     if (command_line == NULL) {
-        programe_error();
-        return;
+        return 1;
     }
 
     char *red_fn = NULL; // redirection file name
@@ -92,33 +81,27 @@ void parse_command_execute(char *raw_line) {
     } else if (argc == 2) {
 
         if (strlen(command_line) == 0) {
-            programe_error();
-            return;
+            return 1;
         }
 
         // 2 for redirection
         int argc = 0;
         trim(&red_fn, argv[1]);
-        // printf("%s\n", red_fn);
 
         if (strlen(red_fn) == 0) {
-            programe_error();
-            return;
+            return 1;
         }
 
         char *trimmed = strdup(red_fn);
         while (strsep(&trimmed, " ") != NULL) { //TODO: too simple
             argc++;
         }
-        // printf("%s\n", red_fn);
 
         if (argc >= 2) {
-            programe_error();
-            return;
+            return 1;
         }
     } else {
-        programe_error();
-        return;
+        return 1;
     }
 
     argc = 0;
@@ -133,20 +116,15 @@ void parse_command_execute(char *raw_line) {
     // builtin command
     if (strcmp(argv[0], "exit") == 0) {
         if (argc != 1) {
-            programe_error();
-            return;
+            return 1;
         } else {
             exit(0);
         }
     } else if (strcmp(argv[0], "cd") == 0) {
         if (argc != 2) {
-            // printf("cd error occured");
-            programe_error();
-            return;
+            return 1;
         } else if (chdir(argv[1]) != 0) {
-            // printf("chdir error occured");
-            programe_error();
-            return;
+            return 1;
         }
     } else if (strcmp(argv[0], "path") == 0) {
         int i;
@@ -172,10 +150,11 @@ void parse_command_execute(char *raw_line) {
         }
 
         if (fail) {
-            programe_error();
-            return;
+            return 1;
         }
     }
+
+    return 0;
 }
 
 int main(int argc, char const *argv[]) {
@@ -189,11 +168,13 @@ int main(int argc, char const *argv[]) {
         in_fp = fopen(argv[1], "r");
         if (in_fp == NULL) {
             // printf("open error occured");
+            programe_error();
             exit(1);
         }
     } else {
         // wrong
         // printf("argc error occured");
+        programe_error();
         exit(1);
     }
 
@@ -203,7 +184,9 @@ int main(int argc, char const *argv[]) {
     do {
         if (linelen != 0) {
             line[linelen-1] = '\0'; // the return of getline is a new line. so replace it.
-            parse_command_execute(line);
+            if (parse_command_execute(line) != 0) {
+                programe_error();
+            }
         }
         if (argc == 1) {
             // interact mode only
