@@ -19,7 +19,7 @@ void programe_error() {
 }
 
 // return 0 when the execution has occured.
-int execute(char *fullpath, char *argv[], char* red_fn) { //TODO: red_fn must be trimmed.
+int execute(char *fullpath, int argc, char *argv[], char* red_fn) { //TODO: red_fn must be trimmed.
     if (access(fullpath, X_OK) == 0) {
         // argv[0] is an execuatable.
         pid_t rc = fork();
@@ -36,6 +36,7 @@ int execute(char *fullpath, char *argv[], char* red_fn) { //TODO: red_fn must be
                 }
             }
 
+            argv[argc] = NULL;
             // child
             rc = execv(fullpath, argv);
 
@@ -59,86 +60,84 @@ int execute(char *fullpath, char *argv[], char* red_fn) { //TODO: red_fn must be
     return 1;
 }
 
-int parse_command_execute(char *raw_line) {
+int
+vaild_redirection(char **tokens, int cnt_tokens, char **red_fn) {
+    // - the number of ">" tokens MUST be 0 or 1.
+    // - if ">" token presents.
+    //   - left part MUST be provided.
+    //   - right part MUST be provided. 
+    //   - the size of the right part MUST be 1. (the redirection file name)
+    // execute the left part. if the right part presents, the result of the execution should redriect.
+
+    int cnt_red_sym = 0;
+    int red_index = -1;
+    for (int i=0; i<cnt_tokens; i++) {
+        if (strcmp(tokens[i], ">") == 0) {
+            cnt_red_sym++;
+            red_index = i;
+        }
+    }
+
+    if (cnt_red_sym == 0) {
+        red_fn = NULL;
+        return 0;
+    }
+    if (cnt_red_sym > 1) return 1; // which is invalid.
+
+    if (red_index == 0) return 1; // red symbol can't place firstly.
+    if (red_index == cnt_tokens-1) return 1; // can't place lastly neither.
+    if (red_index != cnt_tokens-2) return 1; // the size of right part must be 1.
+
+    *red_fn = tokens[cnt_tokens-1];
+
+    return 0;
+}
+
+// raw_line is the one executable command. it may include redirection ('>').
+// e.g. "echo hello", "echo hello > output" ...
+int 
+parse_command_execute(char *raw_line) {
+    // e.g. ls -la /tmp > output
+    // split raw input into tokens. ["ls", "-la", "/tmp", ">", "output"]
+    // evaluate redirection syntax is valid.
+
+    char **tokens = NULL;
+    int cnt_tokens = 0;
+
+    if (tokenize_single_command(raw_line, &tokens, &cnt_tokens) != 0)
+        return 1;
+
+    if (cnt_tokens == 0) // ignore an empty command
+        return 0;
+
+    char *red_fn = NULL;
+    if (vaild_redirection(tokens, cnt_tokens, &red_fn) != 0)
+        return 1;
+
+    int exe_argc = 0;
+    if (red_fn == NULL) exe_argc = cnt_tokens;
+    else exe_argc = cnt_tokens - 2;
+
     // parse
-    char *token;
-    char *argv[10]; // FIXME: 10?
-    int argc = 0;
-
-    while ((token = strsep(&raw_line, ">")) != NULL) { //TODO: too simple
-        argv[argc++] = token; 
-    }
-
-    char *command_line = strdup(argv[0]);
-    if (command_line == NULL) {
-        return 1;
-    }
-
-    char *red_fn = NULL; // redirection file name
-    //TODO: free?
-    if (argc == 1) {
-        argc = 0;
-    } else if (argc == 2) {
-
-        if (strlen(command_line) == 0) {
-            return 1;
-        }
-
-        // 2 for redirection
-        int argc = 0;
-        trim(&red_fn, argv[1]);
-
-        if (strlen(red_fn) == 0) {
-            return 1;
-        }
-
-        char *trimmed = strdup(red_fn);
-        while (strsep(&trimmed, " ") != NULL) { //TODO: too simple
-            argc++;
-        }
-
-        if (argc >= 2) {
-            return 1;
-        }
-    } else {
-        return 1;
-    }
-
-    argc = 0;
-
-    while ((token = strsep(&command_line, " \t\n\v\f\r")) != NULL) { //TODO: too simple
-        // multiple whitespace will show up as multiple empty fields.
-        // skip them.
-        if (*token == '\0') continue;
-        argv[argc++] = token; 
-    }
-    argv[argc] = NULL;
-
-    // if argc is zero then the whole line should be ignored.
-    // none executable.
-    if (argc == 0) return 0;
-    
-    // argv[0] == command, argv[1..] == args
-
     // builtin command
-    if (strcmp(argv[0], "exit") == 0) {
-        if (argc != 1) {
+    if (strcmp(tokens[0], "exit") == 0) {
+        if (exe_argc != 1) {
             return 1;
         } else {
             exit(0);
         }
-    } else if (strcmp(argv[0], "cd") == 0) {
-        if (argc != 2) {
+    } else if (strcmp(tokens[0], "cd") == 0) {
+        if (exe_argc != 2) {
             return 1;
-        } else if (chdir(argv[1]) != 0) {
+        } else if (chdir(tokens[1]) != 0) {
             return 1;
         }
-    } else if (strcmp(argv[0], "path") == 0) {
+    } else if (strcmp(tokens[0], "path") == 0) {
         int i;
-        for (i = 1; i < argc; i++) {
-            strcpy(paths[i-1], argv[i]);
+        for (i = 1; i < exe_argc; i++) {
+            strcpy(paths[i-1], tokens[i]);
         } 
-        num_path = argc - 1;
+        num_path = exe_argc - 1;
     } else {
         // should execute another program.
         // path support
@@ -148,8 +147,8 @@ int parse_command_execute(char *raw_line) {
         for (i = 0; i<num_path; i++) {
             strcpy(fullpath, paths[i]);
             strcat(fullpath, "/");
-            strcat(fullpath, argv[0]);
-            if (execute(fullpath, argv, red_fn) == 0) {
+            strcat(fullpath, tokens[0]);
+            if (execute(fullpath, exe_argc, tokens, red_fn) == 0) {
                 // execution success
                 fail = 0;
                 break;
