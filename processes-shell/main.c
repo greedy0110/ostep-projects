@@ -198,10 +198,40 @@ int main(int argc, char const *argv[]) {
                 continue;
             }
 
+            pid_t children[10];
+            int cnt_children = 0;
+            int cnt_cmd = 0;
+            memset(children, 0, sizeof(pid_t)*10);
             while ((single_cmd = strsep(&indicator, "&")) != NULL) {
+                cnt_cmd++;
                 if (*single_cmd == '\0') continue;
-                if (parse_command_execute(single_cmd) != 0) {
+                if (indicator == NULL && cnt_cmd == 1) {
+                    // no parallel.
+                    if (parse_command_execute(single_cmd) != 0) {
+                        programe_error();
+                    }
+                    break;
+                }
+
+                pid_t child = fork();
+                if (child == -1) {
                     programe_error();
+                } else if (child == 0) {
+                    // the child process
+                    if (parse_command_execute(single_cmd) != 0) {
+                        programe_error();
+                        exit(1);
+                    }
+                    exit(0); // the child should end.
+                } else {
+                    children[cnt_children++] = child;
+                }
+            }
+
+            for (int i=0; i<cnt_children; i++) {
+                if (waitpid(children[i], NULL, 0) == -1) {
+                    programe_error();
+                    break;
                 }
             }
 
