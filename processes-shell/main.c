@@ -106,10 +106,17 @@ int parse_command_execute(char *raw_line) {
 
     argc = 0;
 
-    while ((token = strsep(&command_line, " ")) != NULL) { //TODO: too simple
+    while ((token = strsep(&command_line, " \t\n\v\f\r")) != NULL) { //TODO: too simple
+        // multiple whitespace will show up as multiple empty fields.
+        // skip them.
+        if (*token == '\0') continue;
         argv[argc++] = token; 
     }
     argv[argc] = NULL;
+
+    // if argc is zero then the whole line should be ignored.
+    // none executable.
+    if (argc == 0) return 0;
     
     // argv[0] == command, argv[1..] == args
 

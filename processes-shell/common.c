@@ -64,17 +64,18 @@ asserttokenizer(char *raw_input, char *expected[], int expected_cnt) {
     free(tofree);
 }
 
-int 
-main(int argc, char const *argv[]) {
-    char *expected[] = {"a"};
-    asserttokenizer("a", expected, 1);
-    asserttokenizer(" a", expected, 1);
-    asserttokenizer("   a", expected, 1); // tab
-    asserttokenizer("     a     ", expected, 1); // space, tab
+// test code
+// int 
+// main(int argc, char const *argv[]) {
+//     char *expected[] = {"a"};
+//     asserttokenizer("a", expected, 1);
+//     asserttokenizer(" a", expected, 1);
+//     asserttokenizer("   a", expected, 1); // tab
+//     asserttokenizer("     a     ", expected, 1); // space, tab
 
-    char *expected2[] = {"a", "b"};
-    asserttokenizer("a b", expected2, 2);
-    asserttokenizer("a  b", expected2, 2);
-    asserttokenizer("   a     b    ", expected2, 2);
-    return 0;
-}
+//     char *expected2[] = {"a", "b"};
+//     asserttokenizer("a b", expected2, 2);
+//     asserttokenizer("a  b", expected2, 2);
+//     asserttokenizer("   a     b    ", expected2, 2);
+//     return 0;
+// }
