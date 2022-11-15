@@ -118,7 +118,6 @@ parse_command_execute(char *raw_line) {
     if (red_fn == NULL) exe_argc = cnt_tokens;
     else exe_argc = cnt_tokens - 2;
 
-    // parse
     // builtin command
     if (strcmp(tokens[0], "exit") == 0) {
         if (exe_argc != 1) {
@@ -190,9 +189,23 @@ int main(int argc, char const *argv[]) {
     do {
         if (linelen != 0) {
             line[linelen-1] = '\0'; // the return of getline is a new line. so replace it.
-            if (parse_command_execute(line) != 0) {
+
+            // split '&' and parse and execute
+            char *single_cmd, *indicator, *tofree;
+            tofree = indicator = strdup(line);
+            if (indicator == NULL) {
                 programe_error();
+                continue;
             }
+
+            while ((single_cmd = strsep(&indicator, "&")) != NULL) {
+                if (*single_cmd == '\0') continue;
+                if (parse_command_execute(single_cmd) != 0) {
+                    programe_error();
+                }
+            }
+
+            free(tofree);
         }
         if (argc == 1) {
             // interact mode only
