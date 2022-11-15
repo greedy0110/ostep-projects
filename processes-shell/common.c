@@ -110,14 +110,13 @@ asserttokenizer(char *raw_input, char *expected[], int expected_cnt) {
 //     return 0;
 // }
 
-void
-assert_single_command_parsing(char *raw_input, char *expected[], int expected_cnt) {
-    printf("test: %s\n", raw_input);
-
-    char *token, *string, *tofree, *tokens[128];
+int
+tokenize_single_command(char *raw_input, char ***ret_tokens, int *cnt_tokens) {
+    char *token, *string, *tofree;
+    char **tokens = (char**)malloc(sizeof(char*)*128);
     int cnt = 0;
     tofree = string = strdup(raw_input);
-    assert(string != NULL);
+    if (string == NULL) return 1;
 
     // ">" -> ""
     // "ls>" -> "ls", "" 
@@ -125,9 +124,6 @@ assert_single_command_parsing(char *raw_input, char *expected[], int expected_cn
     // "ls>ls" -> "ls", "ls" 
     // ">>" -> "", ""
     while ((token = strsep(&string, ">")) != NULL) {
-        printf("token: %s %d\n", token, cnt);
-        // multiple whitespace will show up as multiple empty fields.
-        // skip them.
         if (*token == '\0') {
             if (string != NULL) tokens[cnt++] = ">";
             continue;
@@ -137,7 +133,7 @@ assert_single_command_parsing(char *raw_input, char *expected[], int expected_cn
                 // multiple whitespace will show up as multiple empty fields.
                 // skip them.
                 if (*inner == '\0') continue;
-                tokens[cnt++] = inner;
+                tokens[cnt++] = strdup(inner);
             }
             // add ">" if there is the next.
             if (string != NULL) {
@@ -145,32 +141,46 @@ assert_single_command_parsing(char *raw_input, char *expected[], int expected_cn
             }
         }
     }
+    free(tofree);
 
-    printf("expected : %d %d\n", cnt, expected_cnt);
+    *ret_tokens = tokens;
+    *cnt_tokens = cnt;
+    return 0;
+}
+
+void
+assert_single_command_parsing(char *raw_input, char *expected[], int expected_cnt) {
+
+    char **tokens = NULL;
+    int cnt = 0;
+
+    assert(tokenize_single_command(raw_input, &tokens, &cnt) == 0);
+    
+
     assert(cnt == expected_cnt);
     for (int i = 0; i < cnt; i++) {
         assert(strcmp(tokens[i], expected[i]) == 0);
     }
 
-    free(tofree);
+    free(tokens);
 }
 
-int 
-main(int argc, char const *argv[]) {
-    char *expected[] = {"ls", "-la", "/tmp", ">", "output"};
-    assert_single_command_parsing("ls -la /tmp > output", expected, 5);
-    assert_single_command_parsing("ls -la /tmp>output", expected, 5);
+// int 
+// main(int argc, char const *argv[]) {
+//     char *expected[] = {"ls", "-la", "/tmp", ">", "output"};
+//     assert_single_command_parsing("ls -la /tmp > output", expected, 5);
+//     assert_single_command_parsing("ls -la /tmp>output", expected, 5);
 
-    char *expected2[] = {">", "output"};
-    assert_single_command_parsing(">output", expected2, 2);
-    char *expected3[] = {">"};
-    assert_single_command_parsing(">", expected3, 1);
-    char *expected4[] = {">", ">"};
-    assert_single_command_parsing(">>", expected4, 2);
-    char *e6[] = {">", ">", ">"};
-    assert_single_command_parsing(">>>", e6, 3);
+//     char *expected2[] = {">", "output"};
+//     assert_single_command_parsing(">output", expected2, 2);
+//     char *expected3[] = {">"};
+//     assert_single_command_parsing(">", expected3, 1);
+//     char *expected4[] = {">", ">"};
+//     assert_single_command_parsing(">>", expected4, 2);
+//     char *e6[] = {">", ">", ">"};
+//     assert_single_command_parsing(">>>", e6, 3);
 
-    char *expected5[] = {"ls", "-la", "/tmp"};
-    assert_single_command_parsing("ls -la /tmp", expected5, 3);
-    return 0;
-}
+//     char *expected5[] = {"ls", "-la", "/tmp"};
+//     assert_single_command_parsing("ls -la /tmp", expected5, 3);
+//     return 0;
+// }
