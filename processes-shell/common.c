@@ -41,3 +41,40 @@ void asserttrim(char *input, const char *expected) {
 //     asserttrim(" a ", "a");
 //     return 0;
 // }
+
+void
+asserttokenizer(char *raw_input, char *expected[], int expected_cnt) {
+    char *token, *string, *tofree, *tokens[128];
+    int cnt = 0;
+    tofree = string = strdup(raw_input);
+    assert(string != NULL);
+
+    while ((token = strsep(&string, " \t\n\v\f\r")) != NULL) {
+        // multiple whitespace will show up as multiple empty fields.
+        // skip them.
+        if (*token == '\0') continue;
+        tokens[cnt++] = token;
+    }
+
+    assert(cnt == expected_cnt);
+    for (int i = 0; i < cnt; i++) {
+        assert(strcmp(tokens[i], expected[i]) == 0);
+    }
+
+    free(tofree);
+}
+
+int 
+main(int argc, char const *argv[]) {
+    char *expected[] = {"a"};
+    asserttokenizer("a", expected, 1);
+    asserttokenizer(" a", expected, 1);
+    asserttokenizer("   a", expected, 1); // tab
+    asserttokenizer("     a     ", expected, 1); // space, tab
+
+    char *expected2[] = {"a", "b"};
+    asserttokenizer("a b", expected2, 2);
+    asserttokenizer("a  b", expected2, 2);
+    asserttokenizer("   a     b    ", expected2, 2);
+    return 0;
+}
